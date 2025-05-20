@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    tools:context=".NBActivity">
+
+    <TextView
+        android:id="@+id/nb_textview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:text="Waiting for transaction data..."
+        android:textSize="16sp" />
+
+    <ProgressBar
+        android:id="@+id/nb_progressbar"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_above="@id/nb_textview"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="24dp"
+        android:visibility="visible" />
+
+</RelativeLayout>
