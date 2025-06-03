@@ -8,7 +8,7 @@ android {
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.example.axis_bank_testing"
+        applicationId "com.example.axis"
         minSdk 24
         targetSdk 35
         versionCode 1
@@ -37,7 +37,17 @@ dependencies {
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
+    implementation libs.mlkit.barcode.scanning
+    implementation libs.androidx.camera.core
+    implementation libs.androidx.camera.camera2
+    implementation libs.androidx.camera.lifecycle
+    implementation libs.androidx.camera.view
 }
+
+configurations.all {
+    exclude group: 'in.juspay', module: 'qrscanner'
+}
+
 hyperSdkPlugin {
     clientId = "axisbank"
     sdkVersion = "2.2.3-xibmb.02"

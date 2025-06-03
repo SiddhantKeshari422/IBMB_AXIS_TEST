@@ -1,27 +1,72 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
     tools:context=".NBActivity">
 
-    <TextView
-        android:id="@+id/nb_textview"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:id="@+id/nb_input_layout"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:gravity="center"
-        android:text="Waiting for transaction data..."
-        android:textSize="16sp" />
+        android:orientation="vertical"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <EditText
+            android:id="@+id/customer_login_id_input_nb"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter Customer Login ID"
+            android:inputType="text"
+            android:autofillHints="username" />
+
+        <CheckBox
+            android:id="@+id/pass_bank_header_checkbox_nb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pass Bank Header"
+            android:checked="true"
+            android:layout_marginTop="8dp"/>
+
+        <CheckBox
+            android:id="@+id/hit_juspay_backend_checkbox_nb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hit Juspay Backend"
+            android:checked="false"
+            android:layout_marginTop="8dp"/>
+
+        <Button
+            android:id="@+id/start_sdk_button_nb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:text="Start SDK" />
+    </LinearLayout>
 
     <ProgressBar
-        android:id="@+id/nb_progressbar"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_above="@id/nb_textview"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="24dp"
-        android:visibility="visible" />
+        android:id="@+id/progress_bar_nb"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:visibility="visible"/>
 
-</RelativeLayout>
+    <include
+        layout="@layout/custom_toast_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
