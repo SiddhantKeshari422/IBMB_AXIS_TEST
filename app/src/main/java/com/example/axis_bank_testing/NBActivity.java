@@ -8,7 +8,13 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.os.Build;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -45,6 +51,9 @@ public class NBActivity extends FragmentActivity { // Or AppCompatActivity if ne
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_nb);
+
+        // Apply initial window settings
+        applySystemUISettings();
 
         customerLoginIdEditTextNb = findViewById(R.id.customer_login_id_input_nb);
         startSdkButtonNb = findViewById(R.id.start_sdk_button_nb);
@@ -186,9 +195,8 @@ public class NBActivity extends FragmentActivity { // Or AppCompatActivity if ne
 
     private void initializeAndProcess(String url, String customerId) {
         try {
-            // Using android.R.id.content to get the root view for HyperServices
-            ViewGroup rootView = (ViewGroup) findViewById(android.R.id.content).getRootView();
-            hyperInstance = new HyperServices(this, rootView);
+            ViewGroup sdkUiContainer = findViewById(R.id.sdk_ui_container);
+            hyperInstance = new HyperServices(this, sdkUiContainer);
 
             JSONObject initiationPayload = createInitiationPayload(customerId);
 
@@ -205,11 +213,13 @@ public class NBActivity extends FragmentActivity { // Or AppCompatActivity if ne
                         final String finalEventDataString = eventDataString; // Effectively final for runOnUiThread
 
                         if (event.equals("initiate_result")) {
-                            showCustomMessage(finalEventDataString, 10000);
+                            showCustomMessage(finalEventDataString, 500);
                             if (hyperInstance.isInitialised()) {
                                 JSONObject processPayload = createProcessPayload(data.optJSONObject("payload"), url, customerId);
                                 if (processPayload != null) {
                                     hyperInstance.process(processPayload);
+                                    // Re-apply after process call with a slight delay
+                                    customToastHandler.postDelayed(NBActivity.this::applySystemUISettings, 500);
                                 } else {
                                     showLoaderNb(false);
                                     // Error message already shown by createProcessPayload if it returns null
@@ -220,6 +230,8 @@ public class NBActivity extends FragmentActivity { // Or AppCompatActivity if ne
                             }
                         } else if (event.equals("process_result")) {
                             showCustomMessage(finalEventDataString, 10000); // Show message first
+                            // Re-apply on process_result with a slight delay
+                            customToastHandler.postDelayed(NBActivity.this::applySystemUISettings, 500);
                             showLoaderNb(false);
                             final JSONObject response = data.optJSONObject("payload");
 
@@ -373,6 +385,26 @@ public class NBActivity extends FragmentActivity { // Or AppCompatActivity if ne
             // Handled by HyperSDK
         } else {
             super.onBackPressed();
+        }
+    }
+
+    private void applySystemUISettings() {
+        Window window = getWindow();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // For Android 11 (API 30) and above
+            WindowCompat.setDecorFitsSystemWindows(window, true);
+
+            WindowInsetsControllerCompat insetsController = WindowCompat.getInsetsController(window, window.getDecorView());
+            if (insetsController != null) {
+                insetsController.show(WindowInsetsCompat.Type.statusBars());
+                insetsController.show(WindowInsetsCompat.Type.navigationBars());
+            }
+        } else {
+            // For versions below Android 11 (API 30)
+            window.getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            );
+            window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
     }
 }

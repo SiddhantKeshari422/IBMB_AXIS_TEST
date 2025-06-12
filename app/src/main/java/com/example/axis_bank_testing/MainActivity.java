@@ -32,10 +32,15 @@ import androidx.camera.view.PreviewView;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.graphics.Insets;
+// import androidx.core.graphics.Insets; // Commented out as ViewCompat.setOnApplyWindowInsetsListener will be removed
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowCompat; // Added for setDecorFitsSystemWindows
+import androidx.core.view.WindowInsetsControllerCompat; // Added
 import androidx.lifecycle.LifecycleOwner;
+import android.view.Window; // Added
+import android.view.WindowManager; // Added
+import android.os.Build; // Added
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.mlkit.vision.barcode.BarcodeScanner;
@@ -85,6 +90,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Apply initial window settings
+        applySystemUISettings();
+
         customerLoginIdEditText = findViewById(R.id.customer_login_id_input);
         startSdkButton = findViewById(R.id.supabutton);
         progressBar = findViewById(R.id.progressBar);
@@ -103,12 +111,12 @@ public class MainActivity extends AppCompatActivity {
                         .build();
         barcodeScanner = BarcodeScanning.getClient(options);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
-
+        // ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+        //     Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+        //     v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+        //     return insets;
+        // });
+        // The above listener is removed as applySystemUISettings and fitsSystemWindows in XML will handle it.
         startSdkButton.setOnClickListener(v -> {
             Log.d("BUTTONS", "User tapped the Start SDK button");
             // Toggle scanning state
@@ -356,7 +364,8 @@ public class MainActivity extends AppCompatActivity {
 
             initiationPayload.put("payload", payload);
 
-            hyperInstance = new HyperServices(this, (ViewGroup) findViewById(android.R.id.content).getRootView());
+            ViewGroup sdkUiContainerMain = findViewById(R.id.sdk_ui_container_main);
+            hyperInstance = new HyperServices(this, sdkUiContainerMain);
 
             hyperInstance.initiate(initiationPayload, new HyperPaymentsCallbackAdapter() {
                 @Override
@@ -377,12 +386,13 @@ public class MainActivity extends AppCompatActivity {
                                     // We manage our own loader
                                 } else if (event.equals("initiate_result")) {
                                     Log.d("SDK Event", "HyperSDK event: initiate_result");
-                                    showCustomMessage(eventDataString, 2000);
+                                    showCustomMessage(eventDataString, 500);
                                     JSONObject response = data.optJSONObject("payload");
                                     if (hyperInstance.isInitialised()) {
                                         JSONObject processPayload = createProcessPayload(response);
                                         if (processPayload != null) {
                                             hyperInstance.process(processPayload);
+                                            customToastHandler.postDelayed(MainActivity.this::applySystemUISettings, 500);
                                         } else {
                                             showLoader(false);
                                             showCustomMessage("Error: Could not create process payload (scanned URL missing?).", 10000);
@@ -394,6 +404,7 @@ public class MainActivity extends AppCompatActivity {
                                 } else if (event.equals("process_result")) {
                                     Log.d("SDK Event", "HyperSDK event: process_result");
                                     showCustomMessage(eventDataString, 10000);
+                                    customToastHandler.postDelayed(MainActivity.this::applySystemUISettings, 500);
                                     showLoader(false); // Hide loader after process_result
                                 } else if (event.equals("log_stream")) {
                                     Log.i("=>Clickstream", data.toString());
@@ -472,6 +483,26 @@ public class MainActivity extends AppCompatActivity {
         // Remove any pending toast messages
         if (customToastHandler != null && hideCustomToastRunnable != null) {
             customToastHandler.removeCallbacks(hideCustomToastRunnable);
+        }
+    }
+
+    private void applySystemUISettings() {
+        Window window = getWindow();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // For Android 11 (API 30) and above
+            WindowCompat.setDecorFitsSystemWindows(window, true);
+
+            WindowInsetsControllerCompat insetsController = WindowCompat.getInsetsController(window, window.getDecorView());
+            if (insetsController != null) {
+                insetsController.show(WindowInsetsCompat.Type.statusBars());
+                insetsController.show(WindowInsetsCompat.Type.navigationBars());
+            }
+        } else {
+            // For versions below Android 11 (API 30)
+            window.getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            );
+            window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
     }
 }
